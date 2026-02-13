@@ -2,3 +2,4 @@
 
 _output/
 cmd/**/bin/
+bpf/.DS_Store
