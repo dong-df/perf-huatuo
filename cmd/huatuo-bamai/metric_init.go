@@ -16,12 +16,10 @@ package main
 
 import (
 	"huatuo-bamai/pkg/metric"
+	"huatuo-bamai/pkg/metric/runtime"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
 )
-
-var promNamespace = "huatuo_bamai"
 
 // InitMetricsCollector creates a new MetricsCollector instance.
 func InitMetricsCollector(blackListed []string, region string) (*prometheus.Registry, error) {
@@ -30,12 +28,9 @@ func InitMetricsCollector(blackListed []string, region string) (*prometheus.Regi
 		return nil, err
 	}
 
-	promRegistry := prometheus.NewRegistry()
-	promRegistry.MustRegister(
-		nc,
-		collectors.NewGoCollector(),
-		collectors.NewProcessCollector(
-			collectors.ProcessCollectorOpts{Namespace: promNamespace}))
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(nc)
 
-	return promRegistry, nil
+	runtime.RegisterCollector(reg, metric.DefaultNamespace)
+	return reg, nil
 }

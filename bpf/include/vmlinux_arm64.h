@@ -1,3 +1,10 @@
+#ifndef __VMLINUX_H__
+#define __VMLINUX_H__
+
+#ifndef BPF_NO_PRESERVE_ACCESS_INDEX
+#pragma clang attribute push (__attribute__((preserve_access_index)), apply_to = record)
+#endif
+
 typedef signed char __s8;
 
 typedef unsigned char __u8;
@@ -10467,7 +10474,8 @@ struct net {
 	};
 	int sctp_ecn_enable;
 	struct list_head xfrm_inexact_bins;
-	long: 64;
+	// compat kernel version
+	u64 net_cookie;
 	long: 64;
 	long: 64;
 };
@@ -91532,3 +91540,8 @@ struct xa_limit {
 	u32 min;
 };
 
+#ifndef BPF_NO_PRESERVE_ACCESS_INDEX
+#pragma clang attribute pop
+#endif
+
+#endif /* __VMLINUX_H__ */

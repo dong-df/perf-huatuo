@@ -25,9 +25,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var promNamespace = "huatuo_bamai"
+var DefaultNamespace = "huatuo_bamai"
 
 // Collector is the interface a collector has to implement.
+//
+//go:generate mockery --name=Collector --dir=. --filename=mock_collector_test.go --inpackage --case=underscore
 type Collector interface {
 	// Get new metrics and expose them via prometheus registry.
 	Update() ([]*Data, error)
@@ -72,14 +74,14 @@ func NewCollectorManager(blackListed []string, region string) (*CollectorManager
 	}
 
 	scrapeDurationDesc := prometheus.NewDesc(
-		prometheus.BuildFQName(promNamespace, "scrape", "collector_duration_seconds"),
-		promNamespace+": Duration of a collector scrape.",
+		prometheus.BuildFQName(DefaultNamespace, "scrape", "collector_duration_seconds"),
+		DefaultNamespace+": Duration of a collector scrape.",
 		[]string{LabelHost, LabelRegion, "collector"},
 		nil,
 	)
 	scrapeSuccessDesc := prometheus.NewDesc(
-		prometheus.BuildFQName(promNamespace, "scrape", "collector_success"),
-		promNamespace+": Whether a collector succeeded.",
+		prometheus.BuildFQName(DefaultNamespace, "scrape", "collector_success"),
+		DefaultNamespace+": Whether a collector succeeded.",
 		[]string{LabelHost, LabelRegion, "collector"},
 		nil,
 	)

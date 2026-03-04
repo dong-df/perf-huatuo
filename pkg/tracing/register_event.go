@@ -34,10 +34,18 @@ type EventTracingAttr struct {
 	TracingData any
 }
 
+const (
+	statusDisabled  = "disabled"
+	statusActive    = "active"
+	statusInactive  = "inactive"
+	statusInitError = "initError"
+)
+
 var (
-	factories           = make(map[string]func() (*EventTracingAttr, error))
-	tracingEventAttrMap = make(map[string]*EventTracingAttr)
-	tracingOnce         sync.Once
+	factories             = make(map[string]func() (*EventTracingAttr, error))
+	tracingEventAttrCache = make(map[string]*EventTracingAttr)
+	tracingStatusCache    = make(map[string]string)
+	tracingOnceCache      sync.Once
 )
 
 func RegisterEventTracing(name string, factory func() (*EventTracingAttr, error)) {
@@ -47,21 +55,26 @@ func RegisterEventTracing(name string, factory func() (*EventTracingAttr, error)
 func NewRegister(blackListed []string) (map[string]*EventTracingAttr, error) {
 	var err error
 
-	tracingOnce.Do(func() {
+	tracingOnceCache.Do(func() {
 		tracingMap := make(map[string]*EventTracingAttr)
 		var attr *EventTracingAttr
 
 		for name, factory := range factories {
 			if slices.Contains(blackListed, name) {
+				tracingStatusCache[name] = statusDisabled
 				continue
 			}
 
 			attr, err = factory()
 			if err != nil {
 				if errors.Is(err, types.ErrNotSupported) {
+					tracingStatusCache[name] = statusInactive
+					// reset the error for the last error in the loop.
+					err = nil
 					continue
 				}
 
+				tracingStatusCache[name] = statusInitError
 				err = fmt.Errorf("traing name: %s, err: [%w]", name, err)
 				return
 			}
@@ -69,14 +82,21 @@ func NewRegister(blackListed []string) (map[string]*EventTracingAttr, error) {
 				err = fmt.Errorf("traing name: %s, invalid flag", name)
 				return
 			}
+
+			tracingStatusCache[name] = statusActive
 			tracingMap[name] = attr
 		}
-		tracingEventAttrMap = tracingMap
+
+		tracingEventAttrCache = tracingMap
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return tracingEventAttrMap, nil
+	return tracingEventAttrCache, nil
+}
+
+func EventTracingStatus() map[string]string {
+	return tracingStatusCache
 }
