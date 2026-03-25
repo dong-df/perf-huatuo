@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 
 	"huatuo-bamai/internal/bpf"
 	"huatuo-bamai/pkg/metric"
@@ -46,7 +47,6 @@ func newSoftirq() (*tracing.EventTracingAttr, error) {
 	return &tracing.EventTracingAttr{
 		TracingData: &softirqLatency{
 			bpf:         nil,
-			isRunning:   false,
 			cpuPossible: cpuPossible,
 			cpuOnline:   cpuOnline,
 		},
@@ -55,11 +55,11 @@ func newSoftirq() (*tracing.EventTracingAttr, error) {
 	}, nil
 }
 
-//go:generate $BPF_COMPILE $BPF_INCLUDE -s $BPF_DIR/softirq.c -o $BPF_DIR/softirq.o
+//go:generate $BPF_COMPILE $BPF_INCLUDE -s $BPF_DIR/system_softirq.c -o $BPF_DIR/system_softirq.o
 
 type softirqLatency struct {
 	bpf         bpf.BPF
-	isRunning   bool
+	running     atomic.Bool
 	cpuPossible int
 	cpuOnline   int
 }
@@ -121,7 +121,7 @@ func irqAllowed(id int) bool {
 }
 
 func (s *softirqLatency) Update() ([]*metric.Data, error) {
-	if !s.isRunning {
+	if !s.running.Load() {
 		return nil, nil
 	}
 
@@ -179,7 +179,7 @@ func (s *softirqLatency) Start(ctx context.Context) error {
 	}
 
 	s.bpf = b
-	s.isRunning = true
+	s.running.Store(true)
 
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -188,6 +188,6 @@ func (s *softirqLatency) Start(ctx context.Context) error {
 
 	<-childCtx.Done()
 
-	s.isRunning = false
+	s.running.Store(false)
 	return nil
 }
