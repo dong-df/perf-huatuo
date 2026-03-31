@@ -43,7 +43,7 @@ func init() {
 var cgroupMgr cgroups.Cgroup
 
 func newCPUIdle() (*tracing.EventTracingAttr, error) {
-	cgroupMgr, _ = cgroups.NewCgroupManager()
+	cgroupMgr, _ = cgroups.NewManager()
 
 	return &tracing.EventTracingAttr{
 		TracingData: &cpuIdleTracing{},
@@ -73,13 +73,13 @@ type containerCPUInfo struct {
 }
 
 type cpuIdleThreshold struct {
-	deltaUser              int64
-	deltaSys               int64
-	deltaTotal             int64
-	usageUser              int64
-	usageSys               int64
-	usageTotal             int64
-	intervalContinuousPerf int64
+	deltaUser       int64
+	deltaSys        int64
+	deltaTotal      int64
+	usageUser       int64
+	usageSys        int64
+	usageTotal      int64
+	intervalTracing int64
 }
 
 // containersCPUIdleMap is the container information
@@ -125,7 +125,7 @@ func detectCPUIdleContainer(threshold *cpuIdleThreshold) (*containerCPUInfo, err
 
 			log.Debugf("container [%s], usage: %v", container.path, container.nowUsagePercentage)
 
-			if shouldCareThisEvent(container, threshold) {
+			if shouldCareThisCPUIdle(container, threshold) {
 				return container, nil
 			}
 		}
@@ -208,11 +208,11 @@ func updateContainerCpuUsage(container *containerCPUInfo) error {
 	return nil
 }
 
-func shouldCareThisEvent(container *containerCPUInfo, threshold *cpuIdleThreshold) bool {
+func shouldCareThisCPUIdle(container *containerCPUInfo, threshold *cpuIdleThreshold) bool {
 	nowtime := time.Now()
 	intervalContinuousPerf := nowtime.Sub(container.traceTime)
 
-	if int64(intervalContinuousPerf.Seconds()) > threshold.intervalContinuousPerf {
+	if int64(intervalContinuousPerf.Seconds()) > threshold.intervalTracing {
 		if (container.nowUsagePercentage.user > threshold.usageUser &&
 			container.deltaUsagePercentage.user > threshold.deltaUser) ||
 			(container.nowUsagePercentage.sys > threshold.usageSys &&
@@ -283,16 +283,16 @@ type CPUIdleTracingData struct {
 
 func (c *cpuIdleTracing) Start(ctx context.Context) error {
 	interval := conf.Get().AutoTracing.CPUIdle.Interval
-	perfRunTimeOut := conf.Get().AutoTracing.CPUIdle.PerfRunTimeOut
+	perfRunTimeOut := conf.Get().AutoTracing.CPUIdle.RunTracingToolTimeout
 
 	threshold := &cpuIdleThreshold{
-		deltaUser:              conf.Get().AutoTracing.CPUIdle.DeltaUserThreshold,
-		deltaSys:               conf.Get().AutoTracing.CPUIdle.DeltaSysThreshold,
-		deltaTotal:             conf.Get().AutoTracing.CPUIdle.DeltaUsageThreshold,
-		usageUser:              conf.Get().AutoTracing.CPUIdle.UserThreshold,
-		usageSys:               conf.Get().AutoTracing.CPUIdle.SysThreshold,
-		usageTotal:             conf.Get().AutoTracing.CPUIdle.UsageThreshold,
-		intervalContinuousPerf: conf.Get().AutoTracing.CPUIdle.IntervalContinuousRun,
+		deltaUser:       conf.Get().AutoTracing.CPUIdle.DeltaUserThreshold,
+		deltaSys:        conf.Get().AutoTracing.CPUIdle.DeltaSysThreshold,
+		deltaTotal:      conf.Get().AutoTracing.CPUIdle.DeltaUsageThreshold,
+		usageUser:       conf.Get().AutoTracing.CPUIdle.UserThreshold,
+		usageSys:        conf.Get().AutoTracing.CPUIdle.SysThreshold,
+		usageTotal:      conf.Get().AutoTracing.CPUIdle.UsageThreshold,
+		intervalTracing: conf.Get().AutoTracing.CPUIdle.IntervalTracing,
 	}
 
 	for {

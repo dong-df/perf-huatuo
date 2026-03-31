@@ -80,39 +80,40 @@ type CommonConf struct {
 			DeltaSysThreshold     int64 `default:"20"`
 			DeltaUsageThreshold   int64 `default:"55"`
 			Interval              int64 `default:"10"`
-			IntervalContinuousRun int64 `default:"1800"`
-			PerfRunTimeOut        int64 `default:"10"`
+			IntervalTracing       int64 `default:"1800"`
+			RunTracingToolTimeout int64 `default:"10"`
 		}
 
 		CPUSys struct {
-			SysThreshold      int64 `default:"45"`
-			DeltaSysThreshold int64 `default:"20"`
-			Interval          int64 `default:"10"`
-			PerfRunTimeOut    int64 `default:"10"`
+			SysThreshold          int64 `default:"45"`
+			DeltaSysThreshold     int64 `default:"20"`
+			Interval              int64 `default:"10"`
+			RunTracingToolTimeout int64 `default:"10"`
 		}
 
 		Dload struct {
-			ThresholdLoad float64 `default:"5.0"`
-			MonitorGap    int     `default:"180"`
+			ThresholdLoad   int64 `default:"5"`
+			Interval        int64 `default:"10"`
+			IntervalTracing int64 `default:"1800"`
 		}
 
 		IOTracing struct {
-			RbpsThreshold       uint64 `default:"2000"`
-			WbpsThreshold       uint64 `default:"1500"`
-			UtilThreshold       uint64 `default:"90"`
-			AwaitThreshold      uint64 `default:"100"`
-			RunIOTracingTimeout uint64 `default:"10"`
-			MaxProcDump         int    `default:"10"`
-			MaxFilesPerProcDump int    `default:"5"`
+			RbpsThreshold         uint64 `default:"2000"`
+			WbpsThreshold         uint64 `default:"1500"`
+			UtilThreshold         uint64 `default:"90"`
+			AwaitThreshold        uint64 `default:"100"`
+			RunTracingToolTimeout uint64 `default:"10"`
+			MaxProcDump           int    `default:"10"`
+			MaxFilesPerProcDump   int    `default:"5"`
 		}
 
 		MemoryBurst struct {
-			DeltaMemoryBurst      int `default:"100"`
-			DeltaAnonThreshold    int `default:"70"`
-			Interval              int `default:"10"`
-			IntervalContinuousRun int `default:"1800"`
-			SlidingWindowLength   int `default:"60"`
-			DumpProcessMaxNum     int `default:"10"`
+			DeltaMemoryBurst    int `default:"100"`
+			DeltaAnonThreshold  int `default:"70"`
+			Interval            int `default:"10"`
+			IntervalTracing     int `default:"1800"`
+			SlidingWindowLength int `default:"60"`
+			DumpProcessMaxNum   int `default:"10"`
 		}
 	}
 
